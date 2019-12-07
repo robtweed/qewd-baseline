@@ -1,0 +1,12 @@
+[
+  {
+    "uri": "/jsdb/viewer/refresh",
+    "method": "GET",
+    "handler": "qewd_refresh_viewer"
+  },
+  {
+    "uri": "/qewd/shutdown",
+    "method": "POST",
+    "handler": "qewd_shutdown"
+  }
+]

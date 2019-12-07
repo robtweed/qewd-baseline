@@ -1,0 +1,8 @@
+{
+  "qewd_up": true,
+  "qewd": {
+    "bodyParser": "body-parser",
+    "poolSize": "1",
+    "mode": "docker_debug"
+  }
+}
