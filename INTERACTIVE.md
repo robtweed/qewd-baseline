@@ -149,6 +149,8 @@ uniquely identified and securely accessed via the token that is created during a
 - a *send* API via which you will be able to securely send WebSocket messages to the QEWD back-end, which
 you handle using modules that you create and maintain.
 
+You should **always** use the pre-built *ewd-client.js* library to interact with the QEWD back-end, 
+regardless of the JavaScript framework you use in the browser.
 
 Finally, this line loads our *app.js* library, which will define our application's dynamic behaviour:
 
@@ -204,7 +206,7 @@ The object passed into the *EWD.start()* method as an argument specifies:
 - the *socket.io* object (*io*)
 
 
-Starting the QEWD Client triggers a chain of events.  In summary:
+Invoking the QEWD Client *EWD.start()* method triggers a chain of events.  In summary:
 
 - the browser establishes a Web-Socket connection with the QEWD back-end
 - the browser sends a *register* WebSocket message to the QEWD back-end
@@ -232,7 +234,7 @@ The *ewd-registered* event triggered our event handler:
             });
 
 
-and we dynamically generated the text inside the *index.html* file's *<div id="content">* tag:
+and we dynamically generated the text inside the *index.html* file's *\<div id="content"\>* tag:
 
               $('#content').text('Hello World is ready for use!');
 
@@ -243,7 +245,9 @@ Finally we also added this:
               EWD.log = true;
 
 This will allow us to see the communication that takes place between the browser and the QEWD back-end
-when we begin to send messages and receive responses.
+when we begin to send messages and receive responses.  Setting *EWD.log* to *true* is useful during
+application development, but should be removed (to set *EWD.log* to its default *false* value)
+in production applications.
 
 
 ### QEWD Activity
@@ -286,7 +290,7 @@ Let's see what's involved in:
 ### Sending a WebSocket to the QEWD Back End
 
 We'll do this simply, for now, using a button.  We'll hide the button initially, revealing it only
-after the *ewd-registered* event has occurred.  Edit the *div id="content">* tag in the
+after the *ewd-registered* event has occurred.  Edit the *\<div id="content"\>* tag in the
  *index.html* file as follows:
 
             <button id="messageBtn">Send a message</button>
@@ -316,7 +320,7 @@ and edit the *app.js* file as follows:
 
 
 Try reloading the *helloworld* page in your browser, and this time you'll see a *Send a message*
-button.  Try clicking it and you'll see an alert.  Note how we didn't set up the butto event
+button.  Try clicking it and you'll see an alert.  Note how we didn't set up the button event
 handler until the *ewd-registered* event had triggered.  This prevents the button being used
 prematurely before the browser and QEWD back-end are ready.
 
@@ -420,10 +424,16 @@ the 1st-level properties:
 - type: matching the type of the message that was originally sent.  *type* is a reserved, mandatory
 property in QEWD WebSocket messages
 - finished: *true* if the handler module has finished its processing
-- message: sub-object containing the response message payload.  It *message.error* is defined, then this
+- message: sub-object containing the response message payload.  If *message.error* is defined, then this
 is an error response, to be handled appropriately in the browser.
 - responseTime: the time (ms) it took between QEWD receiving the incoming WebSocket message from the
-browser until it had the response ready to be forwarded to the browser.
+browser until it had the response ready to be forwarded to the browser. The very first time a particular
+message is handled in a QEWD Worker process, QEWD has to find and load the handler module (and
+potentially other supporting modules).  Depending on traffic at the time, QEWD may also need to
+start a new Worker Process to handle the message.  All this takes time, so don't be surprised to
+see a somewhat lengthy responseTime value first time.  Next time the same message is handled, 
+all those resources will now be cached, and the response time will typically be a small number of
+milliseconds.  You'll discover that QEWD is incredibly fast.
 
 
 ### Writing a QEWD Message Handler
@@ -484,7 +494,7 @@ containing the following:
 
 Save this file.
 
-Now, when you first create a new application folder within the *qewd-apps* folder, you must restart
+**NOTE**: when you first create a new application folder within the *qewd-apps* folder, you must restart
 the QEWD Container, because this folder is read by QEWD's Master Process only when it starts up.
 
 So, stop and restart the QEWD Container:
@@ -495,6 +505,9 @@ So, stop and restart the QEWD Container:
 Then when the container has stopped:
 
         ./start
+
+Note: a QEWD restart is **only** necessary when you create a brand new *qewd-apps* application folder.
+
 
 Now reload the *hello world* page in your browser and click the *Send a message* button.
 
@@ -541,23 +554,23 @@ Let's take a look at the handler module again:
           finished({hello: 'world'});
         };
 
-if you've previously taken the tutorial on QEWD REST APIs (./REST.md), this should
+if you've previously taken the tutorial on [QEWD REST APIs](./REST.md), this should
 look very similar.  However, the signature of the module interface is a little different.
 
 A QEWD interactive application message handler module should export a function with 4 arguments:
 
-- messageObj: an object containing the incoming message object that was sent by the browser.  This
+- **messageObj**: an object containing the incoming message object that was sent by the browser.  This
 will be identical to the object you specified in the browser's *EWD.send()* method, but will also include
 a *token* property containing the QEWD Session token.
 
-- session: an object representing the QEWD Session that was identified via the incoming *token*.  This
+- **session**: an object representing the QEWD Session that was identified via the incoming *token*.  This
 object's *data* property is a QEWD-JSdb Document Node object, and is available for state information
 storage and management.
 
-- send: a method provided by QEWD via which you can send *intermediate* WebSocket messages to the browser
+- **send**: a method provided by QEWD via which you can send *intermediate* WebSocket messages to the browser
 that sent the original request
 
-- finished: a method provided by QEWD via which you:
+- **finished**: a method provided by QEWD via which you:
 
   - return a object as a response.  This object is specified as the one (and only) argument of the
 *finished()* method;
@@ -603,7 +616,7 @@ below the button:
 The *EWD.send()* method's second argument is a callback function which provides you with the response
 object as its argument.  You can then modify the browser page's Document Object Model (DOM) 
 appropriately using the information returned in the response object.  In our case we're
-dynamically creating a *Hello world* text content for the *<div id="content">* tag.
+dynamically creating a *Hello world* text content for the *\<div id="content"\>* tag.
 
 
 That essentially covers the basics of WebSocket messaging and handling in interactive QEWD applications.
