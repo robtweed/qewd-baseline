@@ -623,7 +623,7 @@ That essentially covers the basics of WebSocket messaging and handling in intera
 Whilst the example so far has been deliberately very basic, nevertheless you've been able to see
 the entire *round-trip* life-cycle:
 
-- initiating event in the browser (a button click in our case)
+- an initiating event in the browser (a button click in our case)
 - using *EWD.send* to send a message JSON payload, identified by a unique *type* property
 - processing the message in QEWD using a handler module
 - returning a response JSON payload from QEWD using the *finished()* method
@@ -640,11 +640,830 @@ finishing the message handling
 - the complexity of browser DOM manipulation on receipt of responses.
 
 
-# A More Complex Example to Illustrate these Features
+# Debugging Interactive QEWD Applications
+
+For debugging the browser-side, front-end logic, the browser's development tools / JavaScript
+console are usually adequate.
+
+By turning on the QEWD Client logging, you'll also be able to see the outgoing messages and 
+incoming responses in the browser's JavaScript Console.
+
+Debugging your back-end QEWD message handler modules can be done in exactly the same way
+as [documented for REST APIs](https://github.com/robtweed/qewd-baseline/blob/master/REST.md#debugging-qewd-api-handlers).
+
+The only essentual differences are:
+
+- Using the Node.js REPL for debugging:
+
+  - REST APIs: 
+
+        var x = require('./apis/hello_world')
+
+  - Interactive application handlers:
+
+        var x = require('./qewd-apps/helloworld/register')
+
+
+- Using the Node-Inspector: Add the *debugger* line at the start of your handler module:
+
+        module.exports = function(messageObj, session, send, finished) {
+          debugger    <====***
+
+  and then reload the *index.html* page in your browser and click the *Register* button.  First time
+  you will see the *inspect* link appear, and once you bring up the Inspector panel, click the
+  *Register* button again in the browser, and you should be positioned at the *debugger* line.
+
+
+
+# A More Complex Interactive Application
+
+Let's extend our simple *hello world* application into something more real-world.  We'll add an initial
+login form, and then add a simple set of CRUD functionality to allow us to maintain the login
+details.  Initially, we'll be a new user who needs to register.
+
+As before, we'll illustrate this with a deliberately simple HTML and plain JavaScript/jQuery user
+interface.  Feel free to later re-implement this demonstration application using the JavaScript
+framework of your choice.
+
+We'll be using the QEWD-JSdb database for maintaining the user authentication data.  It's actually
+an ideal use for the Key/Object Store provided by the *KVS* model in QEWD-JSdb.
+
+We'll also use the QEWD Session.
+
+So let's get started.
+
+## New User Registration
+
+When a user first uses our application, they will need to register as a new user.  So let's begin by
+adding that functionality.
+
+### index.html
+
+Edit the *index.html* file for our *hello world* application (*~/qewd-baseline/www/helloworld/index.html*)
+and replace its contents with this:
+
+        <!DOCTYPE html>
+          <head>
+            <title>QEWD WebSocket Application Demo</title> 
+          </head> 
+          <body>
+            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+            <script src="/socket.io/socket.io.js"></script>
+            <script src="/ewd-client.js"></script>
+            <script src="app.js"></script>
+            <h3 id="header">
+              QEWD WebSocket Application Demo
+            </h3>
+            <div id="register-form">
+              Register to use this Demonstration
+              <br><br>
+              <table>
+                <tr>
+                  <td>What Username would you like to use?:</td>
+                  <td>
+                    <input type="text" id="new-username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Choose a Password:</td>
+                  <td>
+                    <input type="password" id="new-password">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Confirm your Password:</td>
+                  <td>
+                    <input type="password" id="new-password-2">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="registerBtn">Register as a New User</button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </body>
+        </html>
+
+
+What we've changed is the contents of the page, and it will now show a new user registration form, 
+in which the user must enter their username and password (plus confirmation of the password) 
+before submitting it with a button click.
+
+### app.js
+
+Similarly, edit the *app.js* file (*~/qewd-baseline/www/helloworld/app.js*) and replace its 
+contents with this:
+
+        $(document).ready(function() {
+
+          EWD.on('ewd-registered', function() {
+            EWD.log = true;
+
+            $('#registerBtn').on('click', function(e) {
+              var username = $('#new-username').val();
+              if (!username || username === '') {
+                alert('You must enter a username!');
+                return;
+              }
+              var password = $('#new-password').val();
+              if (!password || password === '') {
+                alert('You must enter a password!');
+                return;
+              }
+              var password2 = $('#new-password-2').val();
+              if (!password2 || password2 === '') {
+                alert('You must confirm the password!');
+                return;
+              }
+              if (password !== password2) {
+                alert('Passwords do not match!');
+                return;
+              }
+              EWD.send({
+                type: 'register',
+                username: username,
+                password: password,
+                password2: password2
+              }, function(responseObj) {
+                if (responseObj.message.error) {
+                  alert(responseObj.message.error);
+                }
+                else {
+                  // user is logged in
+                  alert('You have successfully logged in');
+                }
+              });
+            });
+          });
+
+          EWD.start({
+            application: 'helloworld',
+            io: io
+          });
+        });
+
+
+What we've done is to add an event handler for the new registration form's *registerBtn* button. 
+This is only defined once the QEWD application is registered, ie:
+
+
+          EWD.on('ewd-registered', function() {
+
+            // QEWD and the browser are ready
+
+            // Turn on the WebSocket message log in the browser
+            EWD.log = true;
+
+            //Create the register button click handler
+
+            $('#registerBtn').on('click', function(e) {
+
+              // handle the new registration button click
+
+            });
+          });
+
+Note that we're enabling the console log so that we can see the outgoing and incoming WebSocket
+messages during development.
+
+The registration button click handler is fairly straightforward.  It applies some basic
+validation to ensure the user entered actual values into the fields, and that the password and
+its confirmation value match.  In this very basic demonstration, we're displaying any errors as
+alerts.
+
+If it passes the validation, then the username and two password values are sent to QEWD as a
+WebSocket message with a *type* property of *register*:
+
+              EWD.send({
+                type: 'register',
+                username: username,
+                password: password,
+                password2: password2
+              }, function(responseObj) {
+                if (responseObj.message.error) {
+                  alert(responseObj.message.error);
+                }
+                else {
+                  // user is logged in
+                  alert('You have successfully logged in');
+                }
+              });
+
+For now we'll use an alert to display any errors returned by QEWD, and also to confirm successful
+registration/login.
+
+
+### QEWD *register* Message Handler Module
+
+Next, we need to create a handler module for this new *register* message.
+
+Create this in the file path: *~/qewd-baseline/qewd-apps/helloworld/register/index.js* with the
+following contents:
+
+        module.exports = function(messageObj, session, send, finished) {
+          if (session.authenticated) {
+            return finished({error: 'Invalid action: You are already logged in!'});
+          }
+          var username = messageObj.username;
+          if (!username || username === '') {
+            return finished({error: 'Missing username'});
+          }
+          var password = messageObj.password;
+          if (!password || password === '') {
+            return finished({error: 'Missing password'});
+          }
+          var password2 = messageObj.password2;
+          if (!password2 || password2 === '') {
+            return finished({error: 'Missing password confirmation'});
+          }
+          if (password !== password2) {
+            return finished({error: 'Passwords do not match'});
+          }
+          if (password.length < 6) {
+            return finished({error: 'Password must be 6 or more characters'});
+          }
+        
+          var authDoc = this.documentStore.use('userAuth');
+          authDoc.enable_kvs();
+          var arr = authDoc.kvs.getIndices();
+          if (!authDoc.kvs.getIndices().includes('username')) {
+            authDoc.kvs.addIndex('username');
+          }
+          if (authDoc.kvs.get_by_index('username', username)) {
+            return finished({error: 'Username already in use'});
+          }
+          var id = authDoc.$('next_id').increment();
+          authDoc.kvs.add(id, {
+            username: username,
+            password: password
+          });
+
+          session.authenticated = true;
+          session.data.$('id').value = id;
+          finished({ok: true});
+        };
+
+Let's go through this handler logic:
+
+- it starts with a series of validations:
+
+  - the user must not already be logged in when registering.  We can use the *session.authenticated*
+flag for this.  This is set to *false* automatically when a new Session is created during application
+registration (ie when you load/reload the web page).
+
+  - there must be non-empty username, password and confirmation password, and the two passwords must
+match.  We've also added a check to prevent too short a password.
+
+- once the validations are complete, we're ready to make use of the QEWD-JSdb KVS database.  We're
+going to use a QEWD-JSdb KVS document that we'll name *userAuth*:
+
+
+          var authDoc = this.documentStore.use('userAuth');
+          authDoc.enable_kvs();
+
+In case this is the very first time our application is used, and hence the first time our
+QWEWD-JSdb KVS document is used, we'll check and ensure that it's set up with an index defined for the
+*username* property:
+
+          var arr = authDoc.kvs.getIndices();
+          if (!authDoc.kvs.getIndices().includes('username')) {
+            authDoc.kvs.addIndex('username');
+          }
+
+With that index in place, we can use it to ensure that registered usernames are unique within the
+KVS database, returning an error if we find a duplicate:
+
+          if (authDoc.kvs.get_by_index('username', username)) {
+            return finished({error: 'Username already in use'});
+          }
+
+Otherwise, we'll generate a new Id for the new registered user - we'll use a simple incrementing
+value in the QEWD-JSdb document:
+
+          var id = authDoc.$('next_id').increment();
+
+Then we'll use that id as the key for our KVS record, and save the username and password in an
+object against that key:
+
+          authDoc.kvs.add(id, {
+            username: username,
+            password: password
+          });
+
+Note that the username will be automatically indexed when we do this.
+
+We'll now flag the user within the QEWD Session as being logged in
+
+          session.authenticated = true;
+
+and we'll save the user's KVS key/id in the Session also:
+
+          session.data.$('id').value = id;
+
+and finally return a success object and tell QEWD that we're finished:
+
+          finished({ok: true});
+
+
+### Restart the QEWD Worker Processes
+
+There's one important step left before we can try this out.  It will be familiar to you if you've
+taken the REST tutorial: we need to stop the QEWD Worker Processes using the QEWD-Monitor application
+to ensure that our new handler module is loaded into the Worker process that processes the incoming
+message.  If you don't know how to do this, follow these instructions:
+
+- Start it up in a new browser window using the URL (replacing the xx's appropriately for your system):
+
+        http://xx.xx.xx.xx:8080/qewd-monitor
+
+- You'll need to use the management password that you specified during the installation Q&A.  By default
+it's:
+
+        keepThisSecret!
+
+- Once you've logged in, you'll be looking at the QEWD Monitor Overview panel.  On the right hand side you'll
+see one or more Child Processes listed, each with a red X button beside it.  Click this button for each
+currently-running process, so you shut them all down.  Note that in order to keep QEWD-Monitor working,
+at least one new Worker process will be automatically restarted.  So just stop the ones that were originally
+running and ignore any new ones that restart!
+
+
+### Try out the New Registration Form
+
+We're now ready to try our revised application.
+
+Reload the *index.html* file in your browser:
+
+        http://xx.xx.xx.xx:8080/helloworld
+
+You should now see the new user registration form.  You can try testing the validation logic if you like, 
+to confirm it's all working correctly.  Then you can try a valid new registration, eg:
+
+- username: *rtweed*
+- password: *secret*
+
+You should get a confirmation alert telling you that the registration was successful.
+
+
+### Inspect the QEWD-JSdb KVS Data
+
+You can do this using the *QEWD-Monitor* application (see the earlier instructions on debugging).
+
+Click the *Document Store* tab/link in the banner at the top of the page.
+
+If you don't already see *^userAuth* appear in the *Documents* list, click the green *Refresh* button
+at the right-hand end of the *Documents* panel banner.
+
+You can now drill down through the structure of the *^userAuth* document to see what was created 
+when you registered as a user of our application.
+
+
+## Add A Login Form
+
+Now that we've created our user authentication record, we need to add a Login form to our
+*index.html* file.  In fact, when you load the page, the login form should be the only form we see, but
+we should also have a *Register* link that, when clicked, replaces the Login form with our
+Register New User form.
+
+### index.html
+
+Let's modify the *index.html* and add the Login form.
+
+After these lines:
+
+            <h3 id="header">
+              QEWD WebSocket Application Demo
+            </h3>
+
+Add this:
+
+            <div id="login-form">
+              You must first Log in
+              <br><br>
+              <table>
+                <tr>
+                  <td>Username:</td>
+                  <td>
+                    <input type="text" id="username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Password:</td>
+                  <td>
+                    <input type="password" id="password">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="loginBtn">Login</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="registerLink">Register</a>
+            </div>
+
+Note the *Register* link at the bottom of this form.
+
+Let's also add a link to the Register form to make it possible to get back to the
+Login form from the Register form.
+
+Find these lines in the Register form that we created earlier:
+
+                <tr>
+                  <td colspan="2">
+                    <button id="registerBtn">Register as a New User</button>
+                  </td>
+                </tr>
+              </table>
+
+and change them to this:
+
+
+                <tr>
+                  <td colspan="2">
+                    <button id="registerBtn">Register as a New User</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="loginLink">Return to Login Form</a>
+            </div>
+
+### app.js
+
+We need to add some dynamic control now:
+
+- hiding both the forms to begin with
+- display the Login form when QEWD is ready
+- when the Register link is clicked, hide the Login form and display the Register form
+- if the Register form is visible and the *Return to Login Form* button is pressed, hide the
+Register form and display the Login Form.
+
+#### Initially hide both forms:
+
+Immediately after this line:
+
+        $(document).ready(function() {
+
+Add these lines:
+
+          $('#login-form').hide();
+          $('#register-form').hide();
+
+
+#### Display the Login Form when QEWD is Ready
+
+At the bottom of the *app.js* file, replace these lines:
+
+            });
+          });
+
+          EWD.start({
+            application: 'helloworld',
+            io: io
+          });
+        });
+
+with these:
+
+            });
+
+            $('#login-form').show();
+          });
+
+          EWD.start({
+            application: 'helloworld',
+            io: io
+          });
+        });
+
+
+#### when the Register link is Clicked
+
+
+Immediately after these lines
+
+
+          EWD.on('ewd-registered', function() {
+            EWD.log = true;
+
+
+Add these lines:
+
+
+            $('#registerLink').on('click', function(e) {
+              $('#login-form').hide();
+              $('#register-form').show();
+            });
+
+
+#### When the *Return to Login Form* Button is Clicked
+
+After the lines you just added (ie the *registerLink* Click handler), add the following lines:
+
+            $('#loginLink').on('click', function(e) {
+              $('#login-form').show();
+              $('#register-form').hide();
+            });
+
+
+### Try out our Front-end Changes
+
+Save your edited versions of *index.html* and *app.js* and try them out by reloading the page
+in your browser.
+
+You should now see the Login form, with the *Register* link below it.  Try clicking it and
+you should now see the Register form, with the *Return to Login Form* link.  Click it and
+the Login form should re-appear.
+
+So the front-end is now behaving itself.  Now we need to bring the Login form to life.
+
+
+#### Submitting the Login Form
+
+SO now we need to add a Click event handler to *app.js* for the *Login* button in our
+newly-added Login form.  It needs to perform basic validation to ensure that the username
+and password are filled out with values, and, if so, send them as a *login* WebSocket message
+payload to the QEWD backend.
+
+
+Find these lines at the bottom of the *app.js* file:
+
+            $('#login-form').show();
+          });
+
+          EWD.start({
+            application: 'helloworld',
+            io: io
+          });
+        });
+
+and, immediately **before** them, add the following:
+
+
+            $('#loginBtn').on('click', function(e) {
+              var username = $('#username').val();
+              if (!username || username === '') {
+                alert('You must enter a username!');
+                return;
+              }
+              var password = $('#password').val();
+              if (!password || password === '') {
+                alert('You must enter a password!');
+                return;
+              }
+              EWD.send({
+                type: 'login',
+                username: username,
+                password: password
+              }, function(responseObj) {
+                if (responseObj.message.error) {
+                  alert(responseObj.message.error);
+                }
+                else {
+                  // user is logged in
+                  $('#login-form').hide();
+                  $('#register-form').hide();
+                  alert('You have successfully logged in');
+                }
+              });
+            });
+
+
+Hopefully this pattern of logic is beginning to become self-explanatory.  The key thing is
+we're using *EWD.send()* to send a WebSocket message object payload, with a *type* property of
+*login*, and we've added to the payload the username and password that the user has entered
+into the form.
+
+### QEWD *login* Handler Module
+
+That's the front-end all ready.  We now just need to add the back-end QEWD message handler
+module for this new *login* message.
+
+You need to create a file named *index.js* with the full file path:
+
+        ~/qewd-baseline/qewd-apps/helloworld/login/index.js
+
+Add the following contents to it:
+
+
+        var isEmpty = require('../../../utils/isEmpty');
+        
+        module.exports = function(messageObj, session, send, finished) {
+          if (session.authenticated) {
+            return finished({error: 'Invalid action: You are already logged in!'});
+          }
+          var username = messageObj.username;
+          if (!username || username === '') {
+            return finished({error: 'Missing username'});
+          }
+          var password = messageObj.password;
+          if (!password || password === '') {
+            return finished({error: 'Missing password'});
+          }
+          var authDoc = this.documentStore.use('userAuth');
+          authDoc.enable_kvs();
+          var matches = authDoc.kvs.get_by_index('username', username, true);
+          if (isEmpty(matches)) {
+            return finished({error: 'Invalid login attempt (0)'});
+          }
+          for (var id in matches) {
+            var authDetails = matches[id];
+            break;
+          }
+          if (authDetails.password !== password) {
+            return finished({error: 'Invalid login attempt (1)'});
+          }
+        
+          session.data.$('id').value = id;
+          session.authenticated = true;
+          finished({ok: true});
+        };
+
+
+As before, let's step through this logic and explain what it's doing.
+
+If you've previously taken the REST API tutorial, you'll be familiar with our use of the
+handy *isEmpty* utility.  We'll load that into the module for later use, as you'll see:
+
+        var isEmpty = require('../../../utils/isEmpty');
+
+
+We first check that the user is not already logged in - the login handler should only
+be invoked for users who **aren't** yet logged in.  The *session.authenticated* flag
+allows us to check the status of the user:
+
+
+          if (session.authenticated) {
+            return finished({error: 'Invalid action: You are already logged in!'});
+          }
+
+We then check the username and password properties of the received message payload, to
+ensure that they have non-empty values.
+
+Then we're ready to check the user credentials against those stored in the QEWD-JSdb KVS store.
+
+We first set up access to it:
+
+          var authDoc = this.documentStore.use('userAuth');
+          authDoc.enable_kvs();
+
+We can then use its *username* index to see whether the specified username exists in the
+KVS:
+
+          var matches = authDoc.kvs.get_by_index('username', username, true);
+
+This will return an empty object if no match is found, in which case we'll return an error:
+
+          if (isEmpty(matches)) {
+            return finished({error: 'Invalid login attempt (0)'});
+          }
+
+There's our *isEmpty* module in use!
+
+
+If a match was found, what will have been returned from the KVS API an object containing
+the keys and data for any matches.  If you remember, the *register* handler logic prevents
+duplicate user names, so the object returned should just contain a single key/object pair.  So
+we'll do this to extract the first (and only) one:
+
+          for (var id in matches) {
+            var authDetails = matches[id];
+            break;
+          }
+
+*authDetails* will be an object, fetched from the KVS, that contains the *username* and *password*
+properties of the matching user.  So we now want to check that the user entered the correct password:
+
+          if (authDetails.password !== password) {
+            return finished({error: 'Invalid login attempt (1)'});
+          }
+
+Note that for now I've added a diagnostic (0) and (1) to the *Invalid login attempt* messages: this
+will allow us to check that each one works (0 = invalid username; 1 = invalid password).  In production
+this distinction should be removed to avoid giving clues as to why a login attempt failed.
+
+So if we've reached this point, the user has correctly authenticated.  So we'll set the
+*authenticated* flag in the user's Session:
+
+          session.authenticated = true;
+
+and we also record the QEWD-JSdb KVS key in the user's session.  You'll see later why we do this:
+
+          session.data.$('id').value = id;
+
+and finally we return a success response object and tell QEWD that we're finished with the
+Worker Process:
+
+          finished({ok: true});
+
+### Try Logging in
+
+We can now try logging in using this new logic.  However, we first need to use
+QEWD-Monitor to stop the Worker processes.  Then reload the browser and enter the username
+and password you used when you registered earlier, eg I used
+
+- username: *rtweed*
+- password: *secret*
+
+You should get an alert saying you logged in.
+
+Try reloading the browser and try deliberately bad values - check that you get the appropriate errors
+if you try a non-existent username, or the wrong password for your registered user.
+
+### Check the User's Session
+
+One more thing to try: reload the browser and login using the correct username and password.
+
+Now in a separate browser window running the QEWD-Monitor application, click on the *Sessions* link/tab
+in its top banner.
+
+If necessary, click the green *refresh* button at the far right-hand end of the *Sessions* panel banner.
+
+Click the blue *Inspect* button next to the last *helloworld* session in the list.  In the right-hand
+panel, you should see something like:
+
+        ewd-session: -->
+        id: 1
+
+The *id* is the value we stored for the KVS key.
+
+Click on the *ewd-session* line and it should expand, showing the *authenticated* flag set to *true*.
+
+
+So we can now register new users and login using the registered username and password.
+
+
+### Maintain User Data
+
+When you either register a new user or login as an existing user, the browser page allows no
+further interaction after alerting you that you've logged in.
+
+Let's change that and, once logged in (either after *register* or *login*), display:
+
+- a form that allows you to change your username
+- a form that allows you to change your password
+- a link that allows you to de-register as a user of the application
+- a link that allows you to logout
+
+Rather than provide within this tutorial all the source code, and rather than then walking
+ you through all the logic for the final version of our application,
+you'll find a complete set of source code for it in the path:
+
+        ~/qewd-baseline/examples/demo
+
+I'll leave it as an exercise for you to examine the source code and figure out how and why
+it works.  You'll find that it's all just variations on the themes we've already seen and examined
+in detail, so it should mostly be self-explanatory by now.
+
+You'll find the final versions of the front-end *index.html* and *app.js* files in:
+
+        ~/qewd-baseline/examples/demo/www
+
+Copy these to overwrite your versions in:
+
+        ~/qewd-baseline/www/helloworld
+
+
+You'll find the final full set of back-end handler modules in:
+
+        ~/qewd-baseline/examples/demo/qewd-apps
+
+Copy these to:
+
+        ~/qewd-baseline/qewd-apps/helloworld
+
+overwriting any of your existing versions, and adding the new ones.
+
+Stop all the QEWD Worker processes using the QEWD-Monitor application and then reload the updated
+*helloworld* application's *index.html* page in your browser.  You can now try out the full functionality.
+
+While you are trying out the application:
+
+- check the activity in the browser's JavaScript console, and see the outgoing messages and incoming 
+responses
+
+- check and drill down through the *^userAuth* QEWD-JSdb KVS document using the QEWD-Monitor's 
+*Document Store* tab to see the effect of changes you make to the username and/or passwords
+
+- check the QEWD Sessions using the QEWD-Monitor's *Sessions* tab
+
+- check the QEWD Container's console log to see the activity within it as you run the application
+
+
+You're now ready to begin creating your own Interactive QEWD Applications.  All the techniques you've
+seen in action within this tutorial are the building blocks of every QEWD application you'll build.
+
+
+# Using Intermediate Messages
+
+...to follow
+
+
+# Hints on using the QEWD Client in JavaScript Frameworks
 
 ... to follow
-
-
-
-
 

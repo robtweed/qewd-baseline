@@ -1,0 +1,122 @@
+        <!DOCTYPE html>
+          <head>
+            <title>QEWD WebSocket Application Demo</title> 
+          </head> 
+          <body>
+            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+            <script src="/socket.io/socket.io.js"></script>
+            <script src="/ewd-client.js"></script>
+            <script src="app.js"></script>
+            <h3 id="header">
+              QEWD WebSocket Application Demo
+            </h3>
+            <div id="login-form">
+              You must first Log in
+              <br><br>
+              <table>
+                <tr>
+                  <td>Username:</td>
+                  <td>
+                    <input type="text" id="username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Password:</td>
+                  <td>
+                    <input type="password" id="password">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="loginBtn">Login</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="registerLink">Register</a>
+            </div>
+
+            <div id="register-form">
+              Register to use this Demonstration
+              <br><br>
+              <table>
+                <tr>
+                  <td>What Username would you like to use?:</td>
+                  <td>
+                    <input type="text" id="new-username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Choose a Password:</td>
+                  <td>
+                    <input type="password" id="new-password">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Confirm your Password:</td>
+                  <td>
+                    <input type="password" id="new-password-2">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="registerBtn">Register as a New User</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="loginLink">Return to Login Form</a>
+            </div>
+
+            <div id="change-form">
+              Change your Registration Details
+              <hr><br>
+              Change Your Username:<br><br>
+              <table>
+                <tr>
+                  <td>New Username:</td>
+                  <td>
+                    <input type="text" id="change-username">
+                  </td>
+                  <td>
+                    <button id="changeUsernameBtn">Update</button>
+                  </td>
+                </tr>
+              </table>
+
+              <hr>Change Your Password:<br><br>
+              <table>
+                <tr>
+                  <td>Current Password:</td>
+                  <td>
+                    <input type="password" id="change-password-current">
+                  </td>
+                </tr>
+                <tr>
+                  <td>New Password:</td>
+                  <td>
+                    <input type="password" id="change-password">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Confirm New Password:</td>
+                  <td>
+                    <input type="password" id="change-password-2">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="changePasswordBtn">Update</button>
+                  </td>
+                </tr>
+              </table>
+              <hr>
+              <br>
+              <a href="#" id="deregisterLink">Unsubscribe from this service</a>
+              <hr>
+              <br>
+              <a href="#" id="logoutLink">Logout</a>
+            </div>
+
+          </body>
+        </html>
