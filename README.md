@@ -20,6 +20,10 @@ It supports two modes of operation:
 2) A version that will run on the InterSystems 
 [AWS Community Edition of IRIS](https://aws.amazon.com/marketplace/pp/B07MSHYLF1?qid=1575041206953&sr=0-1&ref_=srh_res_product_title)
 
+This repository also contains in-depth tutorials that will teach you how to build QEWD-based:
+
+- [REST APIs](./REST.md)
+- [interactive WebSocket-based applications](./INTERACTIVE.md)
 
 # What is QEWD?
 
