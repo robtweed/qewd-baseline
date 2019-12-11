@@ -1460,10 +1460,70 @@ seen in action within this tutorial are the building blocks of every QEWD applic
 
 # Using Intermediate Messages
 
-...to follow
+WebSockets provide a persistent, bi-drectional network connection between the browser and QEWD
+back-end.  Unlike HTTP, WebSocket messages are one-directional and can be instigated by either end.
+
+The standard use of WebSocket messages in QEWD, as described thus far in this tutorial, emulate
+HTTP messages where the browser initiates the process, sends a message and gets a response back.
+
+However, one of the interesting possibilities you have within your back-end message handler
+modules is to return multiple messages to the browser during the processing of the message.  The
+so-called *intermediate* messages that preceed the final *finished()* message can be sent to the
+browser using the *send()* method that is provided by the message handler module interface.
+
+[Click here](https://github.com/robtweed/qewd/blob/master/up/docs/InteractiveApps.md#intermediate-messages)
+ for full details on using intermediate messages.
+
+
+
+# Advanced Interactive QEWD APplications
+
+[Click here](https://github.com/robtweed/qewd/blob/master/up/docs/InteractiveApps.md)
+for further details and documentation on Interactive QEWD Applications, including the
+so-called *Life-Cycle Event Hooks*.
+
+
 
 
 # Hints on using the QEWD Client in JavaScript Frameworks
 
-... to follow
+If you want to build QEWD applications with a browser front end (or even a Native Mobile
+JavaScript-based front end), then you need to load the QEWD Client and make use of its
+APIs for application registration and message sending/receipt.
+
+There are two available pre-built modules that can be used in React applications:
+
+- [qewd-react](https://github.com/robtweed/qewd-react)
+- [react-qewd](https://github.com/wdbacker/react-qewd)
+
+If you want to use Vue.js and Nuxt.js:
+
+- [vue-qewd](https://github.com/wdbacker/vue-qewd)
+
+
+If you want to use QEWD with another JavaScript framework, the key things you need
+to be aware of are:
+
+- the QEWD Client (known as *ewd-client*) can be loaded as a module, eg:
+
+  - install it using:
+
+        npm install ewd-client
+
+  - load it using:
+
+        var qewd_client = require('ewd-client')
+
+- you need to prevent the JavaScript framework from allowing any user interaction until the
+*ewd-client*'s *start()* method has been invoked, and the *ewd-registered* event has been
+triggered
+
+- you need to pass *ewd-client*'s *EWD* object to all components/modules that need to
+send messages to and/or receive responses from the QEWD back-end.  This is **not** a globally-scoped
+object, and, for example, the QEWD session token and, indeed, *socket.io* are secured within a
+closure that is created by the *start()* method.  You cannot, therefore, access its methods and
+events without explicitly passing the *ewd-client*'s *EWD* object to components and modules.
+
+Take a look at the pre-built examples referred to above to see how these issues have been handled
+for React and Vue.
 
