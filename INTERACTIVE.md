@@ -1475,6 +1475,60 @@ browser using the *send()* method that is provided by the message handler module
  for full details on using intermediate messages.
 
 
+# Using 3rd Party Node.js Modules in your Handler Modules
+
+One of the amazingly powerful things about using Node.js is the massive ecosystem of
+ 3rd-party modules that are available on NPM.
+
+QEWD allows you to use any 3rd-party Node.js Modules you want or need to assist in your
+back-end message handler module logic.
+
+However, in order to use 3rd-party modules in the Dockerised version of QEWD, you must tell 
+it to install them when it first starts up.
+
+## Installing 3rd-Party Modules
+
+You instruct QEWD to install 3rd party modules in the same way 
+[as described for REST APIs](https://github.com/robtweed/qewd-baseline/blob/master/REST.md#installing-3rd-party-modules).
+
+
+## Using 3rd Party Modules
+
+Again, the approach is identical to that 
+[described for REST APIs](https://github.com/robtweed/qewd-baseline/blob/master/REST.md#using-3rd-party-modules)
+
+
+# Accessing External Resources from your Message Handler Modules
+
+Although you perform your message handler logic within a back-end QEWD handler module, 
+you may want/need to access external resources, eg REST services.
+
+QEWD is quite happy to let you to this. For example, you could use the request module to make 
+REST requests to an external REST service. Let's use a well-known test service as a demonstration:
+
+
+    var request = require('request');
+    var count = 0;
+    
+    module.exports = function(messageObj, session, send, finished) {
+      count++;
+      var options = {
+        uri: 'https://jsonplaceholder.typicode.com/todos/' + count,
+        method: 'GET'
+      };
+      request(options, function(error, response, body) {
+        finished(JSON.parse(body));
+      });
+    };
+
+
+Each time this message handler was invoked, you would get the next generated record from the 
+*jsonplaceholder* REST service.
+
+Note that because we're using an asyncronous piece of logic, the *finished()* function **MUST** 
+be called inside the *request()* function's callback, so the QEWD Worker process isn't released 
+back to its available pool until the REST response from jsoneplaceholder has been received.
+
 
 # Advanced Interactive QEWD APplications
 
