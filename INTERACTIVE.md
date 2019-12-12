@@ -1527,7 +1527,7 @@ Each time this message handler was invoked, you would get the next generated rec
 
 Note that because we're using an asyncronous piece of logic, the *finished()* function **MUST** 
 be called inside the *request()* function's callback, so the QEWD Worker process isn't released 
-back to its available pool until the REST response from jsoneplaceholder has been received.
+back to its available pool until the REST response from *jsonplaceholder* has been received.
 
 
 # Advanced Interactive QEWD APplications
