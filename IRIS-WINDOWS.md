@@ -3,7 +3,7 @@
 
 The instructions below explain how to get QEWD running on a Windows system with Cach&eacute; or IRIS.
 
-# Ensure the IRIS C Callin Service is Enabled
+# Ensure the Cach&eacute; or IRIS C Callin Service is Enabled
 
 QEWD uses the [*mg-dbx*](https://github.com/chrisemunt/mg-dbx) 
 module to integrate with Cach&eacute; and IRIS, and *mg-dbx* requires the
