@@ -368,12 +368,23 @@ new sub-folders named *www* and *qewd-apps* appear. QEWD has loaded in everythin
 for monitoring your system and for developing interactive applications.
 
 
+# Test the *ping* REST API
+
+In a browser, try the REST URL:
+
+        http://x.x.x.x:8080/api/ping
+
+        (change the IP address/ hostname and port as per your configuration)
+
+If everything is working, you should see a response that returns the various
+HTTP Request information received by the QEWD Worker Process that handled the
+API.
+
 
 # Developing REST APIs on IRIS with QEWD
 
 To find out how to develop REST Applications with QEWD on your iRIS system, you should
 [follow the tutorial](./REST.md).
-
 
 
 
