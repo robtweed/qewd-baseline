@@ -51,7 +51,9 @@ JavaScript framework.
 
 # Getting Started
 
-For the IRIS / AWS Version, see [these instructions](./IRIS.md).
+- For the IRIS Community AWS Version, see [these instructions](./IRIS.md) and then skip to the next section.
+
+- If you're running Cach&eacute; or IRIS natively on Windows, see [these instructions](./IRIS-WINDOWS.md) and then skip to the next section.
 
 Otherwise, the simplest way to work with QEWD is to use the pre-built Docker version which will run on
 any Linux system or even on a Raspberry Pi.
@@ -91,7 +93,7 @@ To stop the Docker Container, you should always use the command:
 This cleanly and safely shuts down the database-connected QEWD Worker Processes
 
 
-The QEWD-baseline Folder Structure
+# The QEWD-baseline Folder Structure
 
 You'll see the following folders in your QEWD-baseline directory:
 
