@@ -39,9 +39,12 @@ Let's start with the front-end for our *hello world* application, which will run
 We first need to decide on a name for our application.  The Application name is entirely up to you to
 decide - any string value will do.  Let's call ours *helloworld*.
 
-In the QEWD-baseline folder (I'll assume you installed it in *~/qewd-baseline*), you'll find
-a sub-directory named *www*.  There's already the front-end for an application named *viewer*.  This
-is automatically included for you in the repository.
+I'll assume that you installed QEWD *~/qewd-baseline*, but if
+you're using QEWD in a different folder, modify any paths in this tutorial appropriately.
+
+In your QEWD installation folder, you'll find
+a sub-directory named *www*.  It may already contain sub-folders for other application
+front-ends, for example you may see the front-end for an application named *viewer*.
 
 Add a new subdirectory to the *~/qewd-baseline/www* directory, giving it the name we're going to
 give our application, eg:
