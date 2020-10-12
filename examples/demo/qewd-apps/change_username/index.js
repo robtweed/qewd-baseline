@@ -2,15 +2,15 @@ module.exports = function(messageObj, session, send, finished) {
   if (!session.authenticated) {
     return finished({error: 'Invalid action: You are not logged in!'});
   }
-  var username = messageObj.username;
+  let username = messageObj.username;
   if (!username || username === '') {
     return finished({error: 'Missing username'});
   }
-  var id = session.data.$('id').value;
+  let id = session.data.$('id').value;
 
-  var authDoc = this.documentStore.use('userAuth');
+  let authDoc = this.documentStore.use('userAuth');
   authDoc.enable_kvs();
-  var data = authDoc.kvs.get_by_key(id);
+  let data = authDoc.kvs.get_by_key(id);
 
   console.log(data);
 

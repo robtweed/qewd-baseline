@@ -1,25 +1,27 @@
-var isEmpty = require('../../../utils/isEmpty');
+let isEmpty = require('../../../utils/isEmpty');
 
 module.exports = function(messageObj, session, send, finished) {
   if (session.authenticated) {
     return finished({error: 'Invalid action: You are already logged in!'});
   }
-  var username = messageObj.username;
+  let username = messageObj.username;
   if (!username || username === '') {
     return finished({error: 'Missing username'});
   }
-  var password = messageObj.password;
+  let password = messageObj.password;
   if (!password || password === '') {
     return finished({error: 'Missing password'});
   }
-  var authDoc = this.documentStore.use('userAuth');
+  let authDoc = this.documentStore.use('userAuth');
   authDoc.enable_kvs();
-  var matches = authDoc.kvs.get_by_index('username', username, true)
+  let matches = authDoc.kvs.get_by_index('username', username, true)
   if (isEmpty(matches)) {
     return finished({error: 'Invalid login attempt (0)'});
   }
-  for (var id in matches) {
-    var authDetails = matches[id];
+  let authDetails;
+  let id;
+  for (id in matches) {
+    authDetails = matches[id];
     break;
   }
   if (authDetails.password !== password) {

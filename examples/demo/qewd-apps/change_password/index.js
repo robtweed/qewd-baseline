@@ -2,7 +2,7 @@ module.exports = function(messageObj, session, send, finished) {
   if (!session.authenticated) {
     return finished({error: 'Invalid action: You are not logged in!'});
   }
-  var password_current = messageObj.password_current;
+  let password_current = messageObj.password_current;
   if (!password_current || password_current === '') {
     return finished({error: 'Missing current password'});
   }
@@ -20,11 +20,11 @@ module.exports = function(messageObj, session, send, finished) {
   if (password.length < 6) {
     return finished({error: 'Password must be 6 or more characters'});
   }
-  var id = session.data.$('id').value;
+  let id = session.data.$('id').value;
 
-  var authDoc = this.documentStore.use('userAuth');
+  let authDoc = this.documentStore.use('userAuth');
   authDoc.enable_kvs();
-  var data = authDoc.kvs.get_by_key(id);
+  let data = authDoc.kvs.get_by_key(id);
 
   if (data.password !== password_current) {
     return finished({error: 'Your current password was not entered correctly'});

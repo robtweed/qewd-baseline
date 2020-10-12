@@ -1,7 +1,7 @@
 # qewd-baseline: Developing Interactive Applications with QEWD
  
 Rob Tweed <rtweed@mgateway.com>  
-22 November 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)  
+12 October 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)  
 
 Twitter: @rtweed
 
@@ -24,8 +24,8 @@ create your interactive applications.
 
 Let's start in time-honoured fashion with a simple browser-based "Hello World" application.
 
-For the purposes of simplicity and clarity, we won't make use of any fancy JavaScript frameworks,
-but for the brevity of its syntax, we'll make use of jQuery.  Feel free to adapt the logic to
+For the purposes of simplicity and clarity, we won't make use of any fancy JavaScript frameworks.
+I'm going to use vanilla JavaScript.  Feel free to adapt the logic to
 work with your favourite JavaScript framework.  I'll provide some tips along the way on a few things you'll
 need to consider when using frameworks with QEWD.
 
@@ -58,10 +58,8 @@ following:
             <title>QEWD WebSocket Application Demo</title> 
           </head> 
           <body>
-            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
             <script src="/socket.io/socket.io.js"></script>
-            <script src="/ewd-client.js"></script>
-            <script src="app.js"></script>
+            <script src="app.js" type="module"></script>
             <h3 id="header">
               QEWD WebSocket Application Demo
             </h3>
@@ -71,16 +69,17 @@ following:
 
 Next, create a JavaScript file named *app.js* in the same directory, with the following content:
 
-
-        $(document).ready(function() {
-            EWD.on('ewd-registered', function() {
-              EWD.log = true;
-              $('#content').text('Hello World is ready for use!');
-            });
-          
-          EWD.start({
-            application: 'helloworld',
-            io: io
+        import {QEWD} from '../qewd-client.js';
+         
+        document.addEventListener('DOMContentLoaded', () => {
+    
+          QEWD.on('ewd-registered', () => {
+            QEWD.log = true;
+            document.getElementById('content').textContent = 'Hello World is ready for use!';
+          });
+      
+          QEWD.start({
+            application: 'helloworld'
           });
         });
 
@@ -118,43 +117,16 @@ Let's break down the details of the key pieces that we put into the *index.html*
 The *index.html* file provides the markup for our *hello world* application.  Its main task is actually
 to load the various JavaScript libraries that it needs:
 
-
-This line loads jQuery from an online CDN source:
-
-            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-
-The next line loads the WebSocket client library - *socket-io* - from the QEWD server.  QEWD
+This *script* tag loads the WebSocket client library - *socket-io* - from the QEWD server.  QEWD
 comes with *socket-io* pre-installed and configured for you.  Always load it via the path shown:
-
 
             <script src="/socket.io/socket.io.js"></script>
 
-The next line loads the QEWD Client JavaScript library from QEWD.  This is always pre-installed and
-ready for use in QEWD:
+The next *script* tag loads your *app.js*  file.  The *type="module"* attribute tells
+the browser to load it as an ES6 module.  The *app.js* module will define our 
+application's dynamic behaviour:
 
-            <script src="/ewd-client.js"></script>
-
-The QEWD Client Library provides you with several key things:
-
-- an automated mechanism via which your application will register itself with the QEWD back-end,
-establishing the means by which the browser and QEWD back-end can securely communicate via
-WebSocket messages.  This security is maintained via an opaque, randomly-generated token that is
-known by and available to the browser and QEWD back-end.
-
-- as part of the application registration process, QEWD will have established a Session.  This
-Session may be used to maintain state information for the user of your application. Session State
-storage is maintained using a [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) database.  The session is
-uniquely identified and securely accessed via the token that is created during application registration.
-
-- a *send* API via which you will be able to securely send WebSocket messages to the QEWD back-end, which
-you handle using modules that you create and maintain.
-
-You should **always** use the pre-built *ewd-client.js* library to interact with the QEWD back-end, 
-regardless of the JavaScript framework you use in the browser.
-
-Finally, this line loads our *app.js* library, which will define our application's dynamic behaviour:
-
-            <script src="app.js"></script>
+            <script src="app.js" type="module"></script>
 
 
 Notice also this line in the *index.html* file:
@@ -166,16 +138,40 @@ This provides us with a tag into which we can dynamically create content in our 
 
 ### app.js
 
-Now let's turn our attention to the *app.js* file.
+Now let's turn our attention to the *app.js* module file.
 
-It uses a jQuery event handler that is triggered once all the resources required by the browser
+It first imports the *QEWD-Client* module from your QEWD Web Server's root folder:
+
+        import {QEWD} from '../qewd-client.js';
+
+The QEWD Client Library is automatically installed for you in QEWD systems.  
+It provides you with several key things:
+
+- an automated mechanism via which your application will register itself with the QEWD back-end,
+establishing the means by which the browser and QEWD back-end can securely communicate via
+WebSocket messages.  This security is maintained via an opaque, randomly-generated token that is
+known by and available to the browser and QEWD back-end.
+
+- as part of the application registration process, QEWD will have established a Session.  This
+Session may be used to maintain state information for the user of your application. Session State
+storage is maintained using a [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) database.  The session is
+uniquely identified and securely accessed via the token that is created during application registration.
+
+- a *reply* API via which you will be able to securely send WebSocket messages to the QEWD back-end, which
+you handle using modules that you create and maintain.
+
+You should **always** use the pre-built *qewd-client.js* library to interact with the QEWD back-end, 
+regardless of the JavaScript framework you use in the browser.
+
+The next thing the *app.js* modules does is to add an event handler
+that is triggered once all the resources required by the browser
 have loaded and initialised:
 
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', () => {
 
           // only do what's in here once the browser has loaded everything
 
-        })
+        });
 
 This ensures we don't end up with any race conditions or stuff trying to happen before the
 JavaScript resources we need are fully in place and ready for use.
@@ -183,7 +179,7 @@ JavaScript resources we need are fully in place and ready for use.
 Next, we set up a special, QEWD-specific event handler that will fire once our application is ready
 for use by the QEWD back-end:
 
-            EWD.on('ewd-registered', function() {
+            QEWD.on('ewd-registered', () => {
 
               // Only do what's in here once the application has been registered with
               // the QEWD back-end, and QEWD is ready for use by your browser 
@@ -195,18 +191,15 @@ to interact with the QEWD back-end before it's ready for you.
 
 Finally, we start up the QEWD Client in the browser:
 
-          EWD.start({
-            application: 'helloworld',
-            io: io
+          QEWD.start({
+            application: 'helloworld'
           });
 
-The object passed into the *EWD.start()* method as an argument specifies:
-
-- the name of the application to register in the QEWD back-end (*helloworld* in our case)
-- the *socket.io* object (*io*)
+The object passed into the *QEWD.start()* method as an argument specifies 
+the name of the application to register in the QEWD back-end (*helloworld* in our case).
 
 
-Invoking the QEWD Client *EWD.start()* method triggers a chain of events.  In summary:
+Invoking the QEWD Client *QEWD.start()* method triggers a chain of events.  In summary:
 
 - the browser establishes a Web-Socket connection with the QEWD back-end
 - the browser sends a *register* WebSocket message to the QEWD back-end
@@ -230,23 +223,23 @@ command which generated this message:
 The *ewd-registered* event triggered our event handler:
 
 
-            EWD.on('ewd-registered', function() {
+            QEWD.on('ewd-registered', () => {
             });
 
 
 and we dynamically generated the text inside the *index.html* file's *\<div id="content"\>* tag:
 
-              $('#content').text('Hello World is ready for use!');
+            document.getElementById('content').textContent = 'Hello World is ready for use!';
 
 which is what we then saw in the browser.
 
 Finally we also added this:
 
-              EWD.log = true;
+              QEWD.log = true;
 
 This will allow us to see the communication that takes place between the browser and the QEWD back-end
-when we begin to send messages and receive responses.  Setting *EWD.log* to *true* is useful during
-application development, but should be removed (to set *EWD.log* to its default *false* value)
+when we begin to send messages and receive responses.  Setting *QEWD.log* to *true* is useful during
+application development, but should be removed (to set *QEWD.log* to its default *false* value)
 in production applications.
 
 
@@ -296,25 +289,22 @@ after the *ewd-registered* event has occurred.  Edit the *\<div id="content"\>* 
             <button id="messageBtn">Send a message</button>
             <div id="content"></div>
 
-and edit the *app.js* file as follows:
+and replace the contents of the *app.js* file with:
 
-        $(document).ready(function() {
+        import {QEWD} from '../qewd-client.js';
          
-            $('#messageBtn').hide();            
-             
-            EWD.on('ewd-registered', function() {
-              EWD.log = true;
-
-              $('#messageBtn').on('click', function(e) {
-                alert('about to send a message');
-              });
-
-              $('#messageBtn').show();
+        document.addEventListener('DOMContentLoaded', () => {
+          let messageBtn = document.getElementById('messageBtn');
+          messageBtn.style = 'display: none';
+          QEWD.on('ewd-registered', () => {
+            QEWD.log = true;
+            messageBtn.addEventListener('click', () => {
+              alert('about to send a message');
             });
-          
-          EWD.start({
-            application: 'helloworld',
-            io: io
+            messageBtn.style = 'display:';
+          });
+          QEWD.start({
+            application: 'helloworld'
           });
         });
 
@@ -329,12 +319,11 @@ remove the alert from the button's event handler and make it send a WebSocket me
 Change it in the *app.js* file to this:
 
 
-              $('#messageBtn').on('click', function(e) {
-                EWD.send({
-                  type: 'hello'
-                });
+            messageBtn.addEventListener('click', () => {
+              QEWD.reply({
+                type: 'hello'
               });
-
+            });
 
 Make sure you have a terminal window open viewing the QEWD console log, and ensure you've opened
 the JavaScript console in your browser.
@@ -346,7 +335,7 @@ The browser's JavaScript console should be showing something like this:
 
         sent: {"type":"hello"}
         
-        ewd-client.js:181 received: {"type":"hello","finished":true,"message":
+        received: {"type":"hello","finished":true,"message":
         {"error":"Unable to load handler module for: helloworld","reason":
         {"code":"MODULE_NOT_FOUND","requireStack":["/opt/qewd/node_modules/qewd/lib/appHandler.js",
         "/opt/qewd/node_modules/qewd/lib/worker.js","/opt/qewd/node_modules/qewd/lib/qewd.js",
@@ -451,9 +440,8 @@ exists in it: this is for the back-end of the *viewer* application that is inclu
 We need to add a new application folder to ~/qewd-baseline/qewd-apps.  In our *app.js* file, we
 registered it using this:
 
-          EWD.start({
+          QEWD.start({
             application: 'helloworld',  <==== ******
-            io: io
           });
 
 So we need to create a folder path of *~/qewd-baseline/qewd-apps/helloworld* for this.
@@ -463,7 +451,7 @@ So we need to create a folder path of *~/qewd-baseline/qewd-apps/helloworld* for
 
 #### The Message *type*
 
-When you use the *EWD.send()* method to send a message from the browser, you always send a JSON object,
+When you use the *QEWD.reply()* method to send a message from the browser, you always send a JSON object,
 and the object **must** have at least one property which is named *type*.
 
 The *type* property value can be any string, and it provides the identifier by which QEWD can find
@@ -471,7 +459,7 @@ its handler module.
 
 In our simple example, we used this in *app.js* to send the message:
 
-                EWD.send({
+                QEWD.reply({
                   type: 'hello'
                 });
 
@@ -515,7 +503,7 @@ This time, in the browser's JavaScript console, you should see:
 
         received: {"type":"hello","finished":true,"message":{"hello":"world"},"responseTime":"28ms"}
 
-So as before when we saw the error response, the structure is the same:
+So, as before when we saw the error response, the structure is the same:
 
         {
             "type": "hello",
@@ -591,21 +579,20 @@ not being used in the browser's displayed markup.  Let's fix that now by editing
 
 Change these lines:
 
-              $('#messageBtn').on('click', function(e) {
-                EWD.send({
-                  type: 'hello'
-                });
+            messageBtn.addEventListener('click', () => {
+              QEWD.reply({
+                type: 'hello'
               });
+            });
 
 To this:
 
-              $('#messageBtn').on('click', function(e) {
-                EWD.send({
-                  type: 'hello'
-                }, function(responseObj) {
-                  $('#content').text('Hello ' + responseObj.message.hello);
-                });
+            messageBtn.addEventListener('click', async () => {
+              let responseObj = await QEWD.reply({
+                type: 'hello'
               });
+              document.getElementById('content').textContent = 'Hello ' + responseObj.message.hello;
+            });
 
 
 Reload the browser, click the *Send a message* button, and this time you should see this appear
@@ -613,10 +600,20 @@ below the button:
 
         Hello world
 
-The *EWD.send()* method's second argument is a callback function which provides you with the response
-object as its argument.  You can then modify the browser page's Document Object Model (DOM) 
-appropriately using the information returned in the response object.  In our case we're
-dynamically creating a *Hello world* text content for the *\<div id="content"\>* tag.
+The *QEWD.reply()* method is asynchronous and returns a Promise, so we can use *async/await*
+syntax to handle its response.  We must first specify that the button's *click* handler is
+*async*:
+
+            messageBtn.addEventListener('click', async () => {
+
+and then *await* the response from *QEWD.reply()*:
+
+              let responseObj = await QEWD.reply({
+
+We can then use whatever parts of the returned response object in our browser page.  In our
+example we're simply displaying its *message.hello* property in the page's *\<div id="content"\>* tag:
+
+              document.getElementById('content').textContent = 'Hello ' + responseObj.message.hello;
 
 
 That essentially covers the basics of WebSocket messaging and handling in interactive QEWD applications.
@@ -624,10 +621,10 @@ Whilst the example so far has been deliberately very basic, nevertheless you've 
 the entire *round-trip* life-cycle:
 
 - an initiating event in the browser (a button click in our case)
-- using *EWD.send* to send a message JSON payload, identified by a unique *type* property
+- using *QEWD.reply* to send a message JSON payload, identified by a unique *type* property
 - processing the message in QEWD using a handler module
 - returning a response JSON payload from QEWD using the *finished()* method
-- updating the browser's DOM with the response object, via the *EWD.send()* method's callback function.
+- updating the browser's DOM with the response object, via the *QEWD.send()* method's async response.
 
 
 An interactive QEWD application is simply an assembly of lots of such life-cycles.  The only difference
@@ -707,10 +704,8 @@ and replace its contents with this:
             <title>QEWD WebSocket Application Demo</title> 
           </head> 
           <body>
-            <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
             <script src="/socket.io/socket.io.js"></script>
-            <script src="/ewd-client.js"></script>
-            <script src="app.js"></script>
+            <script src="app.js" type="module"></script>
             <h3 id="header">
               QEWD WebSocket Application Demo
             </h3>
@@ -756,23 +751,26 @@ before submitting it with a button click.
 Similarly, edit the *app.js* file (*~/qewd-baseline/www/helloworld/app.js*) and replace its 
 contents with this:
 
-        $(document).ready(function() {
+        import {QEWD} from '../qewd-client.js';
 
-          EWD.on('ewd-registered', function() {
-            EWD.log = true;
+        document.addEventListener('DOMContentLoaded', () => {
 
-            $('#registerBtn').on('click', function(e) {
-              var username = $('#new-username').val();
+          QEWD.on('ewd-registered', () => {
+
+            QEWD.log = true;
+
+            document.getElementById('registerBtn').addEventListener('click', async () => {
+              let username = document.getElementById('new-username').value;
               if (!username || username === '') {
                 alert('You must enter a username!');
                 return;
               }
-              var password = $('#new-password').val();
+              let password = document.getElementById('new-password').value;
               if (!password || password === '') {
                 alert('You must enter a password!');
                 return;
               }
-              var password2 = $('#new-password-2').val();
+              let password2 = document.getElementById('new-password-2').value;
               if (!password2 || password2 === '') {
                 alert('You must confirm the password!');
                 return;
@@ -781,26 +779,24 @@ contents with this:
                 alert('Passwords do not match!');
                 return;
               }
-              EWD.send({
+              let responseObj = await QEWD.reply({
                 type: 'register',
                 username: username,
                 password: password,
                 password2: password2
-              }, function(responseObj) {
-                if (responseObj.message.error) {
-                  alert(responseObj.message.error);
-                }
-                else {
-                  // user is logged in
-                  alert('You have successfully logged in');
-                }
               });
+              if (responseObj.message.error) {
+                alert(responseObj.message.error);
+              }
+              else {
+                // user is logged in
+                alert('You have successfully logged in');
+              }
             });
           });
 
-          EWD.start({
-            application: 'helloworld',
-            io: io
+          QEWD.start({
+            application: 'helloworld'
           });
         });
 
@@ -809,16 +805,16 @@ What we've done is to add an event handler for the new registration form's *regi
 This is only defined once the QEWD application is registered, ie:
 
 
-          EWD.on('ewd-registered', function() {
+          QEWD.on('ewd-registered', () => {
 
             // QEWD and the browser are ready
 
             // Turn on the WebSocket message log in the browser
-            EWD.log = true;
+            QEWD.log = true;
 
             //Create the register button click handler
 
-            $('#registerBtn').on('click', function(e) {
+            document.getElementById('registerBtn').addEventListener('click', async () => {
 
               // handle the new registration button click
 
@@ -836,20 +832,19 @@ alerts.
 If it passes the validation, then the username and two password values are sent to QEWD as a
 WebSocket message with a *type* property of *register*:
 
-              EWD.send({
-                type: 'register',
-                username: username,
-                password: password,
-                password2: password2
-              }, function(responseObj) {
-                if (responseObj.message.error) {
-                  alert(responseObj.message.error);
-                }
-                else {
-                  // user is logged in
-                  alert('You have successfully logged in');
-                }
-              });
+        let responseObj = await QEWD.reply({
+          type: 'register',
+          username: username,
+          password: password,
+          password2: password2
+        });
+        if (responseObj.message.error) {
+          alert(responseObj.message.error);
+        }
+        else {
+          // user is logged in
+          alert('You have successfully logged in');
+        }
 
 For now we'll use an alert to display any errors returned by QEWD, and also to confirm successful
 registration/login.
@@ -891,7 +886,7 @@ following contents:
           if (!authDoc.kvs.getIndices().includes('username')) {
             authDoc.kvs.addIndex('username');
           }
-          if (authDoc.kvs.get_by_index('username', username)) {
+          if (authDoc.kvs.get_by_index('username', username).length > 0) {
             return finished({error: 'Username already in use'});
           }
           var id = authDoc.$('next_id').increment();
@@ -935,7 +930,7 @@ QWEWD-JSdb KVS document is used, we'll check and ensure that it's set up with an
 With that index in place, we can use it to ensure that registered usernames are unique within the
 KVS database, returning an error if we find a duplicate:
 
-          if (authDoc.kvs.get_by_index('username', username)) {
+          if (authDoc.kvs.get_by_index('username', username).length > 0) {
             return finished({error: 'Username already in use'});
           }
 
@@ -1090,7 +1085,81 @@ and change them to this:
               </table>
               <br>
               <a href="#" id="loginLink">Return to Login Form</a>
+
+
+So, in summary, the *index.html* file should now contain:
+
+        <!DOCTYPE html>
+          <head>
+            <title>QEWD WebSocket Application Demo</title> 
+          </head> 
+          <body>
+            <script src="/socket.io/socket.io.js"></script>
+            <script src="app.js" type="module"></script>
+            <h3 id="header">
+              QEWD WebSocket Application Demo
+            </h3>
+
+            <div id="login-form">
+              You must first Log in
+              <br><br>
+              <table>
+                <tr>
+                  <td>Username:</td>
+                  <td>
+                    <input type="text" id="username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Password:</td>
+                  <td>
+                    <input type="password" id="password">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="loginBtn">Login</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="registerLink">Register</a>
             </div>
+
+            <div id="register-form">
+              Register to use this Demonstration
+              <br><br>
+              <table>
+                <tr>
+                  <td>What Username would you like to use?:</td>
+                  <td>
+                    <input type="text" id="new-username">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Choose a Password:</td>
+                  <td>
+                    <input type="password" id="new-password">
+                  </td>
+                </tr>
+                <tr>
+                  <td>Confirm your Password:</td>
+                  <td>
+                    <input type="password" id="new-password-2">
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <button id="registerBtn">Register as a New User</button>
+                  </td>
+                </tr>
+              </table>
+              <br>
+              <a href="#" id="loginLink">Return to Login Form</a>
+            </div>
+          </body>
+        </html>
+
 
 ### app.js
 
@@ -1106,39 +1175,42 @@ Register form and display the Login Form.
 
 Immediately after this line:
 
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', () => {
+
 
 Add these lines:
 
-          $('#login-form').hide();
-          $('#register-form').hide();
+          let loginForm = document.getElementById('login-form');
+          let registerForm = document.getElementById('register-form');
+          loginForm.style = 'display: none';
+          registerForm.style = 'display: none';
 
 
 #### Display the Login Form when QEWD is Ready
 
 At the bottom of the *app.js* file, replace these lines:
 
+
             });
           });
 
-          EWD.start({
-            application: 'helloworld',
-            io: io
+          QEWD.start({
+            application: 'helloworld'
           });
         });
 
 with these:
 
             });
-
-            $('#login-form').show();
+            loginForm.style = 'display:';
           });
 
-          EWD.start({
-            application: 'helloworld',
-            io: io
+          QEWD.start({
+            application: 'helloworld'
           });
         });
+
+This will cause the login form to display when everything is ready for use.
 
 
 #### when the Register link is Clicked
@@ -1147,27 +1219,27 @@ with these:
 Immediately after these lines
 
 
-          EWD.on('ewd-registered', function() {
-            EWD.log = true;
+        QEWD.on('ewd-registered', () => {
+        
+          QEWD.log = true;
 
 
 Add these lines:
 
-
-            $('#registerLink').on('click', function(e) {
-              $('#login-form').hide();
-              $('#register-form').show();
-            });
+          document.getElementById('registerLink').addEventListener('click', () => {
+            loginForm.style = 'display: none';
+            registerForm.style = 'display:';
+          });
 
 
 #### When the *Return to Login Form* Button is Clicked
 
 After the lines you just added (ie the *registerLink* Click handler), add the following lines:
 
-            $('#loginLink').on('click', function(e) {
-              $('#login-form').show();
-              $('#register-form').hide();
-            });
+          document.getElementById('loginLink').addEventListener('click', () => {
+            loginForm.style = 'display:';
+            registerForm.style = 'display: none';
+          });
 
 
 ### Try out our Front-end Changes
@@ -1192,49 +1264,46 @@ payload to the QEWD backend.
 
 Find these lines at the bottom of the *app.js* file:
 
-            $('#login-form').show();
+            loginForm.style = 'display:';
+          });
+        
+          QEWD.start({
+            application: 'helloworld'
           });
 
-          EWD.start({
-            application: 'helloworld',
-            io: io
+and, immediately **before** them (ie before the *login.style* line), add the following:
+
+
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+          let username = document.getElementById('username').value;
+          if (!username || username === '') {
+            alert('You must enter a username!');
+            return;
+          }
+          let password = document.getElementById('password').value;
+          if (!password || password === '') {
+            alert('You must enter a password!');
+            return;
+          }
+          let responseObj = await QEWD.reply({
+            type: 'login',
+            username: username,
+            password: password
           });
+          if (responseObj.message.error) {
+            alert(responseObj.message.error);
+          }
+          else {
+            // user is logged in
+            loginForm.style = 'display: none';
+            registerForm.style = 'display: none';
+            alert('You have successfully logged in');
+          }
         });
-
-and, immediately **before** them, add the following:
-
-
-            $('#loginBtn').on('click', function(e) {
-              var username = $('#username').val();
-              if (!username || username === '') {
-                alert('You must enter a username!');
-                return;
-              }
-              var password = $('#password').val();
-              if (!password || password === '') {
-                alert('You must enter a password!');
-                return;
-              }
-              EWD.send({
-                type: 'login',
-                username: username,
-                password: password
-              }, function(responseObj) {
-                if (responseObj.message.error) {
-                  alert(responseObj.message.error);
-                }
-                else {
-                  // user is logged in
-                  $('#login-form').hide();
-                  $('#register-form').hide();
-                  alert('You have successfully logged in');
-                }
-              });
-            });
 
 
 Hopefully this pattern of logic is beginning to become self-explanatory.  The key thing is
-we're using *EWD.send()* to send a WebSocket message object payload, with a *type* property of
+we're using *QEWD.reply()* to send a WebSocket message object payload, with a *type* property of
 *login*, and we've added to the payload the username and password that the user has entered
 into the form.
 
@@ -1554,29 +1623,36 @@ If you want to use Vue.js and Nuxt.js:
 
 - [vue-qewd](https://github.com/wdbacker/vue-qewd)
 
+You can also use QEWD with the WebComponents-based 
+[*mg-webComponents*](https://github.com/robtweed/mg-webComponents)
+ framework.  See the 
+[detailed tutorial](https://github.com/robtweed/qewd-microservices-examples/blob/master/WINDOWS-IRIS-2.md#the-qewd-interactive-application-development-environment) on how to build an interactive QEWD-based application
+using *mg-webComponents*.
+
+
 
 If you want to use QEWD with another JavaScript framework, the key things you need
 to be aware of are:
 
-- the QEWD Client (known as *ewd-client*) can be loaded as a module, eg:
+- the QEWD Client (known as *qewd-client*) can be loaded as a module, eg:
 
   - install it using:
 
-        npm install ewd-client
+        npm install qewd-client
 
   - load it using:
 
-        var qewd_client = require('ewd-client')
+        let qewd_client = require('qewd-client')
 
 - you need to prevent the JavaScript framework from allowing any user interaction until the
-*ewd-client*'s *start()* method has been invoked, and the *ewd-registered* event has been
+*qewd-client*'s *start()* method has been invoked, and the *ewd-registered* event has been
 triggered
 
-- you need to pass *ewd-client*'s *EWD* object to all components/modules that need to
+- you need to pass *qewd-client*'s *QEWD* object to all components/modules that need to
 send messages to and/or receive responses from the QEWD back-end.  This is **not** a globally-scoped
 object, and, for example, the QEWD session token and, indeed, *socket.io* are secured within a
 closure that is created by the *start()* method.  You cannot, therefore, access its methods and
-events without explicitly passing the *ewd-client*'s *EWD* object to components and modules.
+events without explicitly passing the *ewd-client*'s *QEWD* object to components and modules.
 
 Take a look at the pre-built examples referred to above to see how these issues have been handled
 for React and Vue.
