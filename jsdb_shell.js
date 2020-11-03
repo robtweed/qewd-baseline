@@ -3,7 +3,7 @@
  ----------------------------------------------------------------------------
  | qewd-jsdb-shell: For use in Node REPL                                    |
  |                                                                          |
- | Copyright (c) 2019 M/Gateway Developments Ltd,                           |
+ | Copyright (c) 2019-20 M/Gateway Developments Ltd,                        |
  | Redhill, Surrey UK.                                                      |
  | All rights reserved.                                                     |
  |                                                                          |
@@ -24,13 +24,13 @@
  |  limitations under the License.                                          |
  ----------------------------------------------------------------------------
 
-  2 December 2019
+  3 November 2020
 
 */
 
 var http = require('http');
 
-const ydb_release = 'r1.28';
+const ydb_release = 'r1.30';
 
 
 function jsdb() {
